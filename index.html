@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>NY Times Article Search</title>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <link href="style.css" rel="stylesheet">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js" crossorigin="anonymous"></script>
+  </head>
+
+  <body>
+
+    <main role="main" class="container">
+      <div class="row">
+        <div class="col-md-9 col-centered">
+          
+          <div class="row">
+            <div class="col-12">
+              <div class="card text-white bg-dark mb-3" style="text-align: center; vertical-align: middle; padding: 10px">
+                <div class="card-body">
+                  <h1>New York Times Search</h1>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row" style="margin-bottom: 10px;">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header text-white bg-dark">
+                  Search Parameters
+                </div>
+                <div class="card-body">
+                <form>
+                  <input name="redirect" type="hidden" value="">
+                  <p>
+                    <label>Search Term:</label>
+                    <input id="pSearch" class="form-control mr-sm-2" type="text" value="Calvin Coolidge" onfocus="if (this.value=='Calvin Coolidge') this.value='';" onfocusout="if (this.value=='') this.value='Calvin Coolidge';">
+                  </p>
+                  <p>
+                    <label>Number of Records to Retrieve:</label>
+                    <input id="pNum" class="form-control mr-sm-2" type="text" value="10" onfocus="if (this.value=='10') this.value='';" onfocusout="if (this.value=='') this.value='10';">
+                  </p>
+                  <p>
+                    <label>Start Year:</label>
+                    <input id="pStart" class="form-control mr-sm-2" type="text" value="1923" onfocus="if (this.value=='1923') this.value='';" onfocusout="if (this.value=='') this.value='1923';">
+                  </p>
+                  <p>
+                    <label>End Year (Optional):</label>
+                    <input id="pEnd" class="form-control mr-sm-2" type="text">
+                  </p>
+                  <p>
+                    <input id="btnSearch" class="btn btn-secondary" style="cursor: pointer;" type="button" value="Search &raquo;">
+                    <input id="btnClear" class="btn btn-secondary" style="cursor: pointer;" type="button" value="&xotime; Clear Results">
+                  </p>
+                </form>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header text-white bg-dark">
+                  Top Articles
+                </div>
+                <div class="card-body" style="padding: 10px;">
+                  
+                  <div id="article-block">
+
+                    <!-- example search entry, these need to be added dynamically
+                    <div class="article-entry">
+                      <div class="article-index">1</div>
+                      <div class="article-headline">
+                        Example Article; WHO AND DEEWHO: University of Nowhere Press. 123 pp.
+                      </div>
+                      <hr>
+                      <p>Snippet: null</p>
+                      <p>2017-11-20T00:00:00Z</p>
+                      <p><a href="#">http://www.whatever.com/articleid...</a></p>
+                    </div>
+                    end of entry -->
+
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p style="text-align: center;">&copy; Bootcamp UT! 2017</p>
+    </footer>
+  
+    <script type="text/javascript">
+
+      var nPages = 0, nPage = 0, dHTML = '';
+
+      $(document).on("click", "#btnSearch", function() {
+        $("#article-block").empty();
+        nPages = Math.ceil($("#pNum").val() / 10);
+        nPage = 0;
+        //for (i = 0; i < nPages; i++) {
+          searchArticles();
+        //}
+      });
+
+      $(document).on("click", "#btnClear", function() {$("#article-block").empty();});
+
+      function searchArticles() {
+        var eYear = $("#pEnd").val();
+        if (eYear.length === 0) {
+          eYear = new Date().getFullYear();
+        }
+        var jURL = "https://api.nytimes.com/svc/search/v2/articlesearch.json?";
+        jURL += "api-key=dbb35dcc6f964633be7b61e6d4fccd5a";
+        jURL += "&q=" + $("#pSearch").val();
+        jURL += "&begin_date=" + $("#pStart").val() + "0101"; // YYYYMMDD
+        jURL += "&end_date=" + eYear + "1231"; // YYYYMMDD
+        jURL += "&page=" + nPage;
+        jURL += "&fl=headline,snippet,pub_date,web_url";
+        $.get(jURL).done(function(result) {
+          var jData = result.response.docs;
+          dHTML = '';
+          for (i = 0; i < jData.length; i++) {
+            dHTML +=
+              '<div class="article-entry">' +
+              '\t<div class="article-index">' + ((nPage * 10) + (i + 1)) + '</div>\n' +
+              '\t<div class="article-headline">\n' +
+              '\t\t' + jData[i].headline.main + '\n' +
+              '\t</div>\n' +
+              '\t<hr>\n' +
+              '\t<p>Snippet: ' + jData[i].snippet + '</p>\n' +
+              '\t<p>' + jData[i].pub_date + '</p>\n' +
+              '\t<p><a href="' + jData[i].web_url + '" target="_blank">' + jData[i].web_url + '</a></p>\n' +
+              '</div>\n';
+          }
+        }).then(function() {
+          $("#article-block").append(dHTML);
+          nPage++;
+          if (nPage < nPages) {
+            searchArticles(nPage);
+          } else {
+            return;
+          }
+        });
+      }
+    </script>
+
+  </body>
+</html>
